@@ -1,0 +1,8 @@
+build/
+package/
+dist/
+*.log
+*.asi
+*.dll
+*.o
+*.exe

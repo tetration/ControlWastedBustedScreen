@@ -1,0 +1,46 @@
+name: Build ASI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install MSYS2 MinGW32
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          update: true
+          install: >-
+            mingw-w64-i686-gcc
+            mingw-w64-i686-binutils
+
+      - name: Build 32-bit ASI
+        shell: msys2 {0}
+        run: |
+          mkdir -p build
+          gcc -shared -O2 -Wall -Wextra -o build/ControlWastedBustedScreen.asi src/ControlWastedBustedScreen.c
+          objdump -f build/ControlWastedBustedScreen.asi
+
+      - name: Prepare package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item build/ControlWastedBustedScreen.asi package/
+          Copy-Item ControlWastedBustedScreen.ini package/
+          Copy-Item README.txt package/
+          Compress-Archive -Path package/* -DestinationPath ControlWastedBustedScreen.zip -Force
+
+      - name: Upload zipped artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ControlWastedBustedScreen
+          path: ControlWastedBustedScreen.zip
